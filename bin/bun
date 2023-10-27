@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+# Get the BUN_VERSION defined by the environment and use it.
+BUN_VERSION=$(env | grep ^BUN_VERSION | cut -d'=' -f2)
+[[ -z $BUN_VERSION ]] && BUN_VERSION=latest
+
+# To be able to run and access multiple bun containers from the host, we
+# need to create the container with unique name and assign it to a random
+# port number.
+CONTAINER_NAME=${CONTAINER_NAME:-dockerized_bun_${BUN_VERSION}-$(date +%s)}
+CONTAINER_PORT=${CONTAINER_PORT:-$(($RANDOM % 999 + 3000 ))}
+
+# WIP: How to handle bun global cache
+
+docker run -it --rm --init \
+    --user $(id -u):$(id -g) \
+    --ulimit memlock=-1:-1 \
+    --name ${CONTAINER_NAME} \
+    -v ${VOLUME:-$PWD}:/home/bun/app \
+    -p ${CONTAINER_PORT}:3000 \
+    oven/bun:${BUN_VERSION} \
+    ${@}
